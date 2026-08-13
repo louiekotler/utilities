@@ -40,6 +40,8 @@ What it does:
   alone forever after.
 - **git identity**: fills in `user.email` / `user.name` / `core.editor`
   only if they aren't already set.
+- **git aliases**: fills in `alias.push` (prints the pushed commit's URL
+  after a successful `git push`) only if it isn't already set.
 
 ## Adding a new script
 

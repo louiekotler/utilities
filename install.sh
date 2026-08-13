@@ -13,6 +13,7 @@ set -e
 #   4. Create ~/.zshoverrides if missing (local, untracked, left alone)
 #   5. Append one guarded block to ~/.zshrc that wires it all up
 #   6. Fill in missing git identity config
+#   7. Fill in missing git aliases
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
@@ -140,6 +141,14 @@ git config --global user.email >/dev/null 2>&1 || { git config --global user.ema
 git config --global user.name >/dev/null 2>&1 || { git config --global user.name "$GIT_NAME"; echo "  set user.name"; }
 git config --global core.editor >/dev/null 2>&1 || { git config --global core.editor "$GIT_EDITOR"; echo "  set core.editor"; }
 echo "  (only fills in keys that weren't already set)"
+echo
+
+# --------- 7. git aliases ----------
+echo "==> git aliases"
+GIT_PUSH_ALIAS='!f() { command git -c alias.push= push "$@"; s=$?; [ $s -eq 0 ] || exit $s; rem="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | cut -d/ -f1)"; rem="${rem:-origin}"; url="$(git config --get remote.$rem.url | sed -E "s#^git@([^:]+):#\1/#; s#^https?://##; s#\.git$##")"; printf "https://%s/commit/%s\n" "$url" "$(git rev-parse HEAD)"; }; f'
+
+git config --global alias.push >/dev/null 2>&1 || { git config --global alias.push "$GIT_PUSH_ALIAS"; echo "  set alias.push"; }
+echo "  (only fills in aliases that weren't already set)"
 echo
 
 echo "Done ✔  Open a new terminal, or run: source ~/.zshrc"
