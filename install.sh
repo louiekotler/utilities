@@ -151,4 +151,39 @@ git config --global alias.push >/dev/null 2>&1 || { git config --global alias.pu
 echo "  (only fills in aliases that weren't already set)"
 echo
 
+# --------- 8. git template dir + backup hook ----------
+echo "==> git template dir"
+TEMPLATE_DIR="$REPO_DIR/git-template"
+
+CURRENT_TEMPLATE="$(git config --global init.templateDir 2>/dev/null || true)"
+if [ -z "$CURRENT_TEMPLATE" ]; then
+  git config --global init.templateDir "$TEMPLATE_DIR"
+  echo "  set init.templateDir -> $TEMPLATE_DIR"
+elif [ "$CURRENT_TEMPLATE" = "$TEMPLATE_DIR" ]; then
+  echo "  already set, skipping"
+else
+  echo "  ! init.templateDir points at $CURRENT_TEMPLATE — leaving it alone."
+  echo "    Copy git-template/hooks/pre-commit in there by hand if you want the"
+  echo "    backup guard."
+fi
+
+# git init seeds the hook into new repos, but repos that already exist and
+# fresh clones never run init, so link it into those too.
+echo "==> backup hook in existing repos under $(dirname "$REPO_DIR")"
+HOOK_SRC="$TEMPLATE_DIR/hooks/pre-commit"
+for repo_git in "$(dirname "$REPO_DIR")"/*/.git; do
+  [ -d "$repo_git" ] || continue
+  repo_name="$(basename "$(dirname "$repo_git")")"
+  hook="$repo_git/hooks/pre-commit"
+  if [ -L "$hook" ] && [ "$(readlink "$hook")" = "$HOOK_SRC" ]; then
+    continue
+  elif [ -e "$hook" ]; then
+    echo "  ! skipping $repo_name: it already has its own pre-commit hook"
+    continue
+  fi
+  ln -sf "$HOOK_SRC" "$hook"
+  echo "  $repo_name"
+done
+echo
+
 echo "Done ✔  Open a new terminal, or run: source ~/.zshrc"

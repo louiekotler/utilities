@@ -1,0 +1,10 @@
+#!/bin/sh
+# Thin shim. git *copies* template hooks into each new repo rather than
+# linking them, so keeping the logic in the utilities repo is what lets an
+# edit reach every repo at once instead of only the ones created afterwards.
+#
+# Fails open: a missing utilities checkout must never block a commit.
+
+GUARD="$HOME/Development/utilities/scripts/git/backup-guard.sh"
+[ -x "$GUARD" ] || exit 0
+exec "$GUARD" "$@"
